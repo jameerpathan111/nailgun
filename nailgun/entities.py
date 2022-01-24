@@ -3344,6 +3344,8 @@ class HostGroup(
         ignore.add('root_pass')
         ignore.add('kickstart_repository')
         ignore.add('compute_resource')
+        if 'Puppet' not in _feature_list(self._server_config):
+            ignore.add('environment')
 
         attrs = attrs or self.read_json()
         attrs['parent_id'] = attrs.pop('ancestry')  # either an ID or None
@@ -4213,6 +4215,7 @@ class Host(
         ignore.add('build_status_label')
         if 'Puppet' not in _feature_list(self._server_config):
             ignore.add('puppetclass')
+            ignore.add('environment')
         result = super().read(entity, attrs, ignore, params)
         if attrs.get('image_id'):
             result.image = Image(
@@ -4798,6 +4801,7 @@ class Location(
         if ignore is None:
             ignore = set()
         ignore.add('realm')
+        ignore.add('environment')
         return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
@@ -5150,6 +5154,7 @@ class Organization(
         if ignore is None:
             ignore = set()
         ignore.add('realm')
+        ignore.add('environment')
         return super().read(entity, attrs, ignore, params)
 
     def update(self, fields=None):
@@ -7639,6 +7644,14 @@ class TemplateCombination(Entity, EntityDeleteMixin, EntityReadMixin):
             'api_path': 'api/v2/template_combinations',
         }
         super().__init__(server_config, **kwargs)
+
+    def read(self, entity=None, attrs=None, ignore=None, params=None):
+        """Provide a default value for ``entity``."""
+        if ignore is None:
+            ignore = set()
+        if 'Puppet' not in _feature_list(self._server_config):
+            ignore.add('environment')
+        return super().read(entity, attrs, ignore, params)
 
 
 class TemplateKind(Entity, EntityReadMixin, EntitySearchMixin):

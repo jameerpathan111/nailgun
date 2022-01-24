@@ -2820,6 +2820,7 @@ class HostGroupTestCase(TestCase):
         self.entity = entities.HostGroup(config.ServerConfig('some url'))
         self.read_json_pacther = mock.patch.object(self.entity, 'read_json')
         self.read_pacther = mock.patch.object(EntityReadMixin, 'read')
+        self.feature_list = mock.patch.object(entities, '_feature_list', return_value={'Puppet'})
 
     def test_read(self):
         """Ensure ``read``, ``read_json`` and ``update_json`` are called once.
@@ -2829,6 +2830,7 @@ class HostGroupTestCase(TestCase):
         """
         read_json = self.read_json_pacther.start()
         read = self.read_pacther.start()
+        self.feature_list.start()
         read_json.return_value = {
             'ancestry': None,
             'id': 641212,  # random
@@ -3741,9 +3743,10 @@ class VirtWhoConfigTestCase(TestCase):
         with self.subTest((method, request)):
             self.assertEqual(inspect.getfullargspec(method), EXPECTED_ARGSPEC)
             kwargs = {'kwarg': gen_integer()}
-            with mock.patch.object(entities, '_handle_response') as handlr:
-                with mock.patch.object(client, request) as client_request:
-                    response = method(**kwargs)
+            with mock.patch.object(entities, '_feature_list', return_value={'Puppet'}):
+                with mock.patch.object(entities, '_handle_response') as handlr:
+                    with mock.patch.object(client, request) as client_request:
+                        response = method(**kwargs)
             self.assertEqual(client_request.call_count, 2)
             self.assertEqual(len(client_request.call_args[0]), 1)
             self.assertEqual(client_request.call_args[1], kwargs)
